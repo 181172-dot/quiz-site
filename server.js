@@ -1,46 +1,87 @@
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.static("public"));
+app.use("/uploads", express.static("uploads"));
 
-let currentDisplay = {
-  visible: false,
-  materials: []
-};
+/* ===== 画像アップロード設定 ===== */
+if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
 
-// 管理者ID・PW（簡易）
+const storage = multer.diskStorage({
+  destination: "uploads/",
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage });
+
+/* ===== データ ===== */
+let buttons = {}; // { id: { name, images[] } }
+let current = { visible: false, images: [] };
+
+/* ===== 管理者 ===== */
 const ADMIN_ID = "admin";
 const ADMIN_PW = "1234";
 
-io.on("connection", (socket) => {
-  // 初期状態送信
-  socket.emit("update", currentDisplay);
+/* ===== 画像アップロードAPI ===== */
+app.post("/upload", upload.array("images"), (req, res) => {
+  const urls = req.files.map(f => "/uploads/" + f.filename);
+  res.json(urls);
+});
 
-  // 管理者ログイン
-  socket.on("login", ({ id, pw }) => {
-    if (id === ADMIN_ID && pw === ADMIN_PW) {
-      socket.emit("loginSuccess");
+/* ===== Socket ===== */
+io.on("connection", socket => {
+
+  socket.isAdmin = false;
+  socket.emit("init", { buttons, current });
+
+  socket.on("login", data => {
+    if (data.id === ADMIN_ID && data.pw === ADMIN_PW) {
+      socket.isAdmin = true;
+      socket.emit("loginOK");
     } else {
-      socket.emit("loginFail");
+      socket.emit("loginNG");
     }
   });
 
-  // 表示
-  socket.on("show", (materials) => {
-    currentDisplay = { visible: true, materials };
-    io.emit("update", currentDisplay);
+  socket.on("addButton", data => {
+    if (!socket.isAdmin) return;
+    buttons[data.id] = { name: data.name, images: [] };
+    io.emit("buttons", buttons);
   });
 
-  // 非表示
-  socket.on("hide", () => {
-    currentDisplay.visible = false;
-    io.emit("update", currentDisplay);
+  socket.on("deleteButton", id => {
+    if (!socket.isAdmin) return;
+    delete buttons[id];
+    io.emit("buttons", buttons);
   });
+
+  socket.on("addImages", data => {
+    if (!socket.isAdmin) return;
+    buttons[data.id].images.push(...data.images);
+    io.emit("buttons", buttons);
+  });
+
+  socket.on("show", id => {
+    if (!socket.isAdmin) return;
+    current = { visible: true, images: buttons[id].images };
+    io.emit("display", current);
+  });
+
+  socket.on("hide", () => {
+    if (!socket.isAdmin) return;
+    current.visible = false;
+    io.emit("display", current);
+  });
+
 });
 
 server.listen(process.env.PORT || 3000);
