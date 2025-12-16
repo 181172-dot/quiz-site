@@ -28,8 +28,8 @@ let buttons = {}; // { id: { name, images[] } }
 let current = { visible: false, images: [] };
 
 /* ===== 管理者 ===== */
-const ADMIN_ID = "admin";
-const ADMIN_PW = "1234";
+const ADMIN_ID = "nakanishi";
+const ADMIN_PW = "nakanishi1221";
 
 /* ===== 画像アップロードAPI ===== */
 app.post("/upload", upload.array("images"), (req, res) => {
