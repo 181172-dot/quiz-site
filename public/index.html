@@ -1,28 +1,36 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
+  <meta charset="UTF-8">
+  <title>クイズ表示</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
 <div class="display-area" id="area">
   <h2>クイズ開始までお待ちください</h2>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const socket=io();
-const area=document.getElementById("area");
+const socket = io();
+const area = document.getElementById("area");
 
-socket.on("display", data=>{
-  area.innerHTML="";
-  if(!data.visible){
-    area.innerHTML="<h2>次の問題をお待ちください</h2>";
+socket.on("display", data => {
+  area.innerHTML = "";
+
+  if (!data.visible) {
+    area.innerHTML = "<h2>次の問題をお待ちください</h2>";
     return;
   }
-  data.images.forEach(url=>{
-    area.innerHTML+=`<img src="${url}">`;
+
+  data.images.forEach(url => {
+    // Render対策：絶対URLに変換
+    const fullUrl = location.origin + url;
+    area.innerHTML += `<img src="${fullUrl}" alt="quiz image">`;
   });
 });
 </script>
+
 </body>
 </html>
