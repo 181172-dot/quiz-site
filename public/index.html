@@ -2,23 +2,18 @@
 <html>
 <body>
 <h2>クイズ表示</h2>
-<div id="display"></div>
+<div id="area"></div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const socket = io();
-const display = document.getElementById("display");
+const socket=io();
+const area=document.getElementById("area");
 
-socket.on("update", data => {
-  display.innerHTML = "";
-  if (!data.visible) return;
-
-  data.materials.forEach(url => {
-    if (url.endsWith(".pdf")) {
-      display.innerHTML += `<iframe src="${url}" width="600" height="400"></iframe><br>`;
-    } else {
-      display.innerHTML += `<img src="${url}" width="400"><br>`;
-    }
+socket.on("display", data=>{
+  area.innerHTML="";
+  if(!data.visible) return;
+  data.images.forEach(url=>{
+    area.innerHTML+=`<img src="${url}" width="500"><br>`;
   });
 });
 </script>
