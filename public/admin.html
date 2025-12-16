@@ -1,49 +1,62 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <link rel="stylesheet" href="style.css">
+</head>
 <body>
-<h2>管理者ログイン</h2>
+<div class="container">
 
-<input id="id" placeholder="ID">
-<input id="pw" type="password" placeholder="PW">
-<button onclick="login()">ログイン</button>
+  <div class="card">
+    <h2>🔐 管理者ログイン</h2>
+    <input id="id" placeholder="ID">
+    <input id="pw" type="password" placeholder="パスワード">
+    <button class="btn-main" onclick="login()">ログイン</button>
+  </div>
 
-<hr>
+  <div class="card">
+    <h3>➕ 問題を追加</h3>
+    <input id="qname" placeholder="問題名（例：第1問）">
+    <button class="btn-main" onclick="addBtn()">追加</button>
+  </div>
 
-<h3>問題追加</h3>
-<input id="qname" placeholder="問題名">
-<button onclick="addBtn()">追加</button>
+  <div id="buttons"></div>
 
-<div id="buttons"></div>
+  <div class="card">
+    <button class="btn-danger" onclick="hide()">全体を非表示</button>
+  </div>
 
-<hr>
-<button onclick="hide()">非表示</button>
+</div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io();
-let currentId = null;
 
 function login(){
   socket.emit("login",{id:id.value,pw:pw.value});
 }
+
 socket.on("loginOK",()=>alert("ログイン成功"));
-socket.on("loginNG",()=>alert("失敗"));
+socket.on("loginNG",()=>alert("ログイン失敗"));
 
 function addBtn(){
-  const id = Date.now().toString();
-  socket.emit("addButton",{id,name:qname.value});
+  socket.emit("addButton",{id:Date.now().toString(),name:qname.value});
 }
 
 socket.on("buttons", btns=>{
-  const div=document.getElementById("buttons");
-  div.innerHTML="";
+  const area=document.getElementById("buttons");
+  area.innerHTML="";
   for(const id in btns){
-    div.innerHTML+=`
-      <h4>${btns[id].name}</h4>
-      <input type="file" multiple onchange="upload(event,'${id}')">
-      <button onclick="show('${id}')">表示</button>
-      <button onclick="del('${id}')">削除</button>
-      <hr>
+    area.innerHTML+=`
+      <div class="card problem">
+        <div>
+          <h4>${btns[id].name}</h4>
+          <input type="file" multiple onchange="upload(event,'${id}')">
+        </div>
+        <div class="problem-actions">
+          <button class="btn-main" onclick="show('${id}')">表示</button>
+          <button class="btn-danger" onclick="del('${id}')">削除</button>
+        </div>
+      </div>
     `;
   }
 });
@@ -53,9 +66,7 @@ function upload(e,id){
   for(const f of e.target.files) fd.append("images",f);
   fetch("/upload",{method:"POST",body:fd})
     .then(r=>r.json())
-    .then(urls=>{
-      socket.emit("addImages",{id,images:urls});
-    });
+    .then(urls=>socket.emit("addImages",{id,images:urls}));
 }
 function show(id){ socket.emit("show",id); }
 function del(id){ socket.emit("deleteButton",id); }
