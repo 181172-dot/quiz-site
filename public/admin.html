@@ -1,26 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
+  <meta charset="UTF-8">
+  <title>管理者画面</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
 <div class="container">
 
+  <!-- ログイン -->
   <div class="card">
     <h2>🔐 管理者ログイン</h2>
     <input id="id" placeholder="ID">
     <input id="pw" type="password" placeholder="パスワード">
     <button class="btn-main" onclick="login()">ログイン</button>
+    <p id="loginMsg"></p>
   </div>
 
+  <!-- 問題追加 -->
   <div class="card">
     <h3>➕ 問題を追加</h3>
     <input id="qname" placeholder="問題名（例：第1問）">
-    <button class="btn-main" onclick="addBtn()">追加</button>
+    <button class="btn-main" onclick="addButton()">追加</button>
   </div>
 
+  <!-- 問題一覧 -->
   <div id="buttons"></div>
 
+  <!-- 非表示 -->
   <div class="card">
     <button class="btn-danger" onclick="hide()">全体を非表示</button>
   </div>
@@ -30,23 +38,90 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io();
+let loggedIn = false;
 
-function login(){
-  socket.emit("login",{id:id.value,pw:pw.value});
+/* ===== ログイン ===== */
+function login() {
+  socket.emit("login", {
+    id: document.getElementById("id").value,
+    pw: document.getElementById("pw").value
+  });
 }
 
-socket.on("loginOK",()=>alert("ログイン成功"));
-socket.on("loginNG",()=>alert("ログイン失敗"));
+socket.on("loginOK", () => {
+  loggedIn = true;
+  document.getElementById("loginMsg").textContent = "ログイン成功";
+});
 
-function addBtn(){
-  socket.emit("addButton",{id:Date.now().toString(),name:qname.value});
+socket.on("loginNG", () => {
+  document.getElementById("loginMsg").textContent = "ログイン失敗";
+});
+
+/* ===== 初期データ ===== */
+socket.on("init", data => {
+  renderButtons(data.buttons);
+});
+
+/* ===== ボタン更新 ===== */
+socket.on("buttons", btns => {
+  renderButtons(btns);
+});
+
+/* ===== 問題追加 ===== */
+function addButton() {
+  if (!loggedIn) return alert("ログインしてください");
+  const name = document.getElementById("qname").value;
+  if (!name) return;
+
+  socket.emit("addButton", {
+    id: Date.now().toString(),
+    name
+  });
+  document.getElementById("qname").value = "";
 }
 
-socket.on("buttons", btns=>{
-  const area=document.getElementById("buttons");
-  area.innerHTML="";
-  for(const id in btns){
-    area.innerHTML+=`
+/* ===== 表示 ===== */
+function show(id) {
+  socket.emit("show", id);
+}
+
+/* ===== 削除 ===== */
+function del(id) {
+  if (!confirm("削除しますか？")) return;
+  socket.emit("deleteButton", id);
+}
+
+/* ===== 非表示 ===== */
+function hide() {
+  socket.emit("hide");
+}
+
+/* ===== 画像アップロード ===== */
+function upload(event, id) {
+  if (!loggedIn) return;
+
+  const fd = new FormData();
+  for (const file of event.target.files) {
+    fd.append("images", file);
+  }
+
+  fetch("/upload", {
+    method: "POST",
+    body: fd
+  })
+  .then(res => res.json())
+  .then(urls => {
+    socket.emit("addImages", { id, images: urls });
+  });
+}
+
+/* ===== UI描画 ===== */
+function renderButtons(btns) {
+  const area = document.getElementById("buttons");
+  area.innerHTML = "";
+
+  for (const id in btns) {
+    area.innerHTML += `
       <div class="card problem">
         <div>
           <h4>${btns[id].name}</h4>
@@ -59,18 +134,8 @@ socket.on("buttons", btns=>{
       </div>
     `;
   }
-});
-
-function upload(e,id){
-  const fd=new FormData();
-  for(const f of e.target.files) fd.append("images",f);
-  fetch("/upload",{method:"POST",body:fd})
-    .then(r=>r.json())
-    .then(urls=>socket.emit("addImages",{id,images:urls}));
 }
-function show(id){ socket.emit("show",id); }
-function del(id){ socket.emit("deleteButton",id); }
-function hide(){ socket.emit("hide"); }
 </script>
+
 </body>
 </html>
