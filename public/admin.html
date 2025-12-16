@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h2>管理者ログイン</h2>
+
+<input id="id" placeholder="ID">
+<input id="pw" type="password" placeholder="PW">
+<button onclick="login()">ログイン</button>
+
+<hr>
+
+<h3>資料URL（1行＝1資料）</h3>
+<textarea id="materials" rows="5" cols="40"></textarea><br>
+
+<button onclick="show()">表示</button>
+<button onclick="hide()">非表示</button>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+
+function login() {
+  socket.emit("login", {
+    id: id.value,
+    pw: pw.value
+  });
+}
+
+socket.on("loginSuccess", () => alert("ログイン成功"));
+socket.on("loginFail", () => alert("失敗"));
+
+function show() {
+  const list = materials.value.split("\n");
+  socket.emit("show", list);
+}
+
+function hide() {
+  socket.emit("hide");
+}
+</script>
+</body>
+</html>
