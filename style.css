@@ -1,0 +1,81 @@
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: #f4f6f8;
+  color: #333;
+}
+
+h2, h3, h4 {
+  margin-top: 0;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+button {
+  padding: 10px 16px;
+  margin: 4px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-main {
+  background: #2563eb;
+  color: white;
+}
+
+.btn-sub {
+  background: #e5e7eb;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.problem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.problem-actions button {
+  margin-left: 6px;
+}
+
+/* 表示画面 */
+.display-area {
+  text-align: center;
+  padding: 20px;
+}
+
+.display-area img {
+  max-width: 90%;
+  max-height: 80vh;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
