@@ -9,34 +9,57 @@
 
 <hr>
 
-<h3>資料URL（1行＝1資料）</h3>
-<textarea id="materials" rows="5" cols="40"></textarea><br>
+<h3>問題追加</h3>
+<input id="qname" placeholder="問題名">
+<button onclick="addBtn()">追加</button>
 
-<button onclick="show()">表示</button>
+<div id="buttons"></div>
+
+<hr>
 <button onclick="hide()">非表示</button>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io();
+let currentId = null;
 
-function login() {
-  socket.emit("login", {
-    id: id.value,
-    pw: pw.value
-  });
+function login(){
+  socket.emit("login",{id:id.value,pw:pw.value});
+}
+socket.on("loginOK",()=>alert("ログイン成功"));
+socket.on("loginNG",()=>alert("失敗"));
+
+function addBtn(){
+  const id = Date.now().toString();
+  socket.emit("addButton",{id,name:qname.value});
 }
 
-socket.on("loginSuccess", () => alert("ログイン成功"));
-socket.on("loginFail", () => alert("失敗"));
+socket.on("buttons", btns=>{
+  const div=document.getElementById("buttons");
+  div.innerHTML="";
+  for(const id in btns){
+    div.innerHTML+=`
+      <h4>${btns[id].name}</h4>
+      <input type="file" multiple onchange="upload(event,'${id}')">
+      <button onclick="show('${id}')">表示</button>
+      <button onclick="del('${id}')">削除</button>
+      <hr>
+    `;
+  }
+});
 
-function show() {
-  const list = materials.value.split("\n");
-  socket.emit("show", list);
+function upload(e,id){
+  const fd=new FormData();
+  for(const f of e.target.files) fd.append("images",f);
+  fetch("/upload",{method:"POST",body:fd})
+    .then(r=>r.json())
+    .then(urls=>{
+      socket.emit("addImages",{id,images:urls});
+    });
 }
-
-function hide() {
-  socket.emit("hide");
-}
+function show(id){ socket.emit("show",id); }
+function del(id){ socket.emit("deleteButton",id); }
+function hide(){ socket.emit("hide"); }
 </script>
 </body>
 </html>
