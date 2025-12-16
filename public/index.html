@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <link rel="stylesheet" href="style.css">
+</head>
 <body>
-<h2>クイズ表示</h2>
-<div id="area"></div>
+<div class="display-area" id="area">
+  <h2>クイズ開始までお待ちください</h2>
+</div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
@@ -11,9 +15,12 @@ const area=document.getElementById("area");
 
 socket.on("display", data=>{
   area.innerHTML="";
-  if(!data.visible) return;
+  if(!data.visible){
+    area.innerHTML="<h2>次の問題をお待ちください</h2>";
+    return;
+  }
   data.images.forEach(url=>{
-    area.innerHTML+=`<img src="${url}" width="500"><br>`;
+    area.innerHTML+=`<img src="${url}">`;
   });
 });
 </script>
